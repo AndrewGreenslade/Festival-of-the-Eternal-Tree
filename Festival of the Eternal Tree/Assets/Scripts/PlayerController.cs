@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer), typeof(Animator))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     private SpriteRenderer playerSpriteRenderer;
     private Rigidbody2D playerRigidbody;
@@ -51,7 +51,8 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         //moves player on x axis with (input * movementSpeed)
-        transform.position += new Vector3(xAxisInput, 0, 0) * movementSpeed * Time.fixedDeltaTime;
+        //transform.position += new Vector3(xAxisInput, 0, 0) * movementSpeed * Time.deltaTime;
+        playerRigidbody.AddForce(new Vector3(xAxisInput, 0, 0) * movementSpeed);
 
         //flip sprite if player is moving in negative direction on X axis
         playerSpriteRenderer.flipX = xAxisInput < 0 ?  true : false;
