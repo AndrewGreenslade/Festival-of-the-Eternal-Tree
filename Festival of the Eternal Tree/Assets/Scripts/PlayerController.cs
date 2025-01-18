@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,15 +11,19 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D playerRigidbody;
     private Animator playerAnimator;
 
+    private float xAxisInput;
+    private float jumpInput;
+    private bool PlayerGrounded = false;
+
     [Header("Movement attributes")]
     public float movementSpeed = 1;
     public float JumpForce = 100;
     public float FloorDetectionRange = 0.05f;
 
-    [Header("Movement input")]
-    public float xAxisInput;
-    public float jumpInput;
-    public bool PlayerGrounded = false;
+    [Header("Health attributes")]
+    public int health = 3;
+    public float invincableHitLength = 3.0f;
+    private float invincableHitcountdown = 0;
 
     [Header("Other attributes")]
     public Transform floorDetectionRayTransform;
@@ -29,6 +34,14 @@ public class PlayerController : MonoBehaviour
         playerSpriteRenderer = GetComponent<SpriteRenderer>();
         playerRigidbody = GetComponent<Rigidbody2D>();
         playerAnimator = GetComponent<Animator>();
+    }
+
+    private void Start()
+    {
+        for (int i = 0; i < health; i++)
+        {
+            UIController.instance.healthUIController.AddHealthIcon();
+        }
     }
 
     void Update()
@@ -46,13 +59,17 @@ public class PlayerController : MonoBehaviour
             //stop jump animation
             playerAnimator.SetBool("Jumping", false);
         }
+
+        if(invincableHitcountdown > 0)
+        {
+            invincableHitcountdown -= Time.deltaTime;
+        }
     }
 
     void FixedUpdate()
     {
         //moves player on x axis with (input * movementSpeed)
-        //transform.position += new Vector3(xAxisInput, 0, 0) * movementSpeed * Time.deltaTime;
-        playerRigidbody.AddForce(new Vector3(xAxisInput, 0, 0) * movementSpeed);
+        playerRigidbody.AddForce(new Vector3(xAxisInput, 0, 0) * movementSpeed * Time.deltaTime, ForceMode2D.Impulse);
 
         //flip sprite if player is moving in negative direction on X axis
         playerSpriteRenderer.flipX = xAxisInput < 0 ?  true : false;
@@ -68,6 +85,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// used to returna value to say if the player is touching the ground.
+    /// </summary>
+    /// <returns></returns>
     public bool isGrounded()
     {
         RaycastHit2D hit2D = Physics2D.Raycast(floorDetectionRayTransform.position, -transform.up, FloorDetectionRange, floorLayerMask);
@@ -86,6 +107,19 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// used to give damage to the player, and starts a countdown for making the player invincable 
+    /// </summary>
+    public void takeDamage()
+    {
+        if (invincableHitcountdown <= 0)
+        {
+            health -= 1;
+            UIController.instance.healthUIController.MinusHealthIcon();
+        }
+
+        invincableHitcountdown = invincableHitLength;
+    }
 
     public void OnMove(InputValue value)
     {
